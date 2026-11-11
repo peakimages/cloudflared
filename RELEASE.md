@@ -1,0 +1,167 @@
+# Releases
+
+Every release is tagged `v<cloudflared version>-v<image version>`, such as `v2026.11.0-v0.1.0`. The `fips` variation is published as `2026.11.0-fips-v0.1.0`, the git tag and the GitHub release are those of the default variation.
+
+> [!IMPORTANT]
+> A push that changes `release.json` or `src/upstream.json` releases the versions they set, unless they are released already. Run `scripts/plan-version.sh` first to see what a push releases.
+
+## Rules
+
+| Branch         | Takes                                                      | Releases                               |
+| -------------- | ---------------------------------------------------------- | -------------------------------------- |
+| `main`         | fixes, and `next` or a release branch for a new version    | stable versions                        |
+| `next`         | features                                                   | prereleases of the next minor or major |
+| `release/v1.4` | the minor 1.4, split off `next` so `next` can go on to 1.5 | prereleases of `1.4.0`                 |
+| `release/v2.0` | the next major, cut from `next`                            | prereleases of `2.0.0`                 |
+| `v1.x`         | backports, once `main` is on v2                            | stable `1.x` versions                  |
+| `v1.2.x`       | backports and hotfixes, cut from the newest tag of v1.2    | stable `1.2.x` versions                |
+
+- `main` takes fixes only. A new minor or major reaches it as a merge of `next` or a release branch
+- Merge `next` or a release branch into `main` only right before you release it, on the same day. To freeze a minor for longer, publish an RC on `next` or cut `release/v1.4`
+- `next` and the release branches publish prereleases only, their stable versions are released on `main`
+- Name a branch after what it changes: `fix/<topic>`, `feat/<topic>`, and `fix/<topic>-v1.2.2` for a backport, after the version that releases it
+- Squash merge pull requests from contributors and pull requests with a single change, such as cloudflared updates
+- Merge everything else with a merge commit: team pull requests with several commits, backports, `next`, the release branches and `v1.3.x` into `main`
+- The merge forward workflow merges `main` into `release/v1.4` and `next`, and `release/v1.4` into `next`
+- While `main` is on 1.3, `v1.1.x` and `v1.2.x` are never merged into another branch
+- Delete `release/v1.4` once `main` has released `1.4.0`
+- Delete `v1.3.x` once it is merged into `main`
+- Delete `v1.1.x` and `v1.2.x` once their release is published, the next backport cuts them again from the newest tag
+
+> [!CAUTION]
+> Never squash merge `next` or a release branch. Their commits stay unmerged and come back as conflicts in every later merge.
+
+## Create a release
+
+> [!NOTE]
+> `next` publishes prereleases only. For its stable version, merge `next` into `main` with a merge commit and create the release on `main`.
+
+1. Describe the changes in change files with `scripts/change.sh`, they become the release notes, see [Change files](#change-files)
+2. Check what the branch releases and the entries it lists:
+
+   ```sh
+   scripts/plan-version.sh
+   scripts/change.sh --notes
+   ```
+
+3. Select the stage and the version, the script commits them and asks to push:
+
+   ```sh
+   scripts/release.sh
+   ```
+
+4. The pushed commit changes `release.json`, so it runs the release workflow, which builds, tests and publishes the release and moves its tags
+
+> [!TIP]
+> To take the release commit back before the push:
+>
+> ```sh
+> scripts/undo-release.sh
+> ```
+
+## Change files
+
+Every change to the image has a file in `.changes/`, `AGENTS.md` describes the types and the wording:
+
+```text
+---
+type: fixed
+commit: 1a2b3c4
+---
+Missing description and license on ghcr.io
+
+- The release index carries the labels of the image as annotations
+```
+
+- `scripts/change.sh` writes a file, it asks for what its flags leave out, and `--notes` prints the entries of the next release
+- `scripts/release.sh` preselects the version the files need and writes them into `CHANGELOG.md`, the release workflow reads its notes from there
+- A prerelease writes the files under `## [Unreleased]`, keeps them and adds its version to the files that have none
+- A stable release writes the files under `## [v1.4.0] - <date>` and removes them
+- `scripts/undo-release.sh` brings the files back as they were
+- A new cloudflared version needs no file, the release workflow writes its notes
+
+## Backport a fix
+
+`main` is on 1.3, and 1.1 and 1.2 still get fixes. A fix reaches each of them through a patch branch and a pull request of its own:
+
+1. Cut the patch branch from the newest tag of the minor, unless it exists:
+
+   ```sh
+   git switch -c v1.2.x v2026.11.0-v1.2.1 && git push -u origin v1.2.x
+   ```
+
+2. Put the fix on a branch named after the version that releases it, cherry-picked from `main` when it is there already:
+
+   ```sh
+   git switch -c fix/<topic>-v1.2.2 origin/v1.2.x && git cherry-pick -x <commit>
+   ```
+
+3. Merge a pull request from `fix/<topic>-v1.2.2` into `v1.2.x` with a merge commit
+4. Create the release on your checkout of `v1.2.x`:
+
+   ```sh
+   git switch v1.2.x && git pull && scripts/release.sh
+   ```
+
+5. Repeat with `v1.1.x` and `fix/<topic>-v1.1.4`. 1.0 gets no backports
+
+> [!IMPORTANT]
+> A hotfix for 1.3 while `main` holds unreleased changes goes through `v1.3.x` the same way. Merge `v1.3.x` into `main` with a merge commit afterwards and delete it. `v1.1.x` and `v1.2.x` are never merged, their fixes come from `main`.
+
+## Patch a dependency
+
+A Go module of cloudflared with a known vulnerability is raised in `src/patches/dependencies.patch`, see [PATCHES.md](PATCHES.md). The build fails while the patch raises a module that the pinned cloudflared requires itself, so a pull request that bumps cloudflared shows when to run `scripts/patch-dependencies.sh` on its branch.
+
+## Release a major version
+
+1. Cut `release/v2.0` from `next` and create its prereleases there with `scripts/release.sh`:
+
+   ```sh
+   git switch -c release/v2.0 origin/next && git push -u origin release/v2.0
+   ```
+
+2. Merge `main` into `release/v2.0`, so v2 has every fix of v1 and the pull request into `main` has no conflicts:
+
+   ```sh
+   git switch release/v2.0 && git pull && git merge origin/main && git push
+   ```
+
+3. Keep v1 on a branch of its own:
+
+   ```sh
+   git switch -c v1.x origin/main && git push -u origin v1.x
+   ```
+
+4. Merge a pull request from `release/v2.0` into `main` with a merge commit
+5. Create the release on `main` and select `2.0.0`:
+
+   ```sh
+   git switch main && git pull && scripts/release.sh
+   ```
+
+6. Delete `release/v2.0`
+
+> [!IMPORTANT]
+> Cut `v1.x` from `main`, or bring an existing one up to date with `main`, before `release/v2.0` is merged into `main`. Afterwards `main` is v2 and v1 lives on `v1.x` alone.
+
+## Pull requests
+
+The pull request workflow builds every pull request and publishes the default variation of the line `latest` of a pull request from a branch of this repository as `ghcr.io/peakimages/cloudflared:pr-<number>`. Its version is `<base>-pr.<number>`:
+
+- Into `next`: `1.4.0-beta.1-pr.1234` after `1.4.0-beta.1`, or `1.5.0-alpha.0-pr.1234` before the first alpha of 1.5.0
+- Into `main`: `1.3.4-pr.1234`
+- PHP's `version_compare` sorts it after its base and before the next prerelease or release
+- Pull requests from forks and Dependabot are built, not published
+- A push to a pull request from `main`, `next`, a release branch or a patch branch that changes `release.json` or `src/upstream.json` is not built, the release workflow builds it
+- ghcr.io only, no git tag and no GitHub release, the clean manifests workflow keeps the image while the pull request is open
+
+## Tags
+
+| Tag                                      | Points at                                                                               |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `2026.11.0-v0.1.0`                       | one release, it never moves                                                             |
+| `latest`, `2026.11.0`, `2026.11`, `2026` | `2026.11.0-v0.1.0`, the newest cloudflared version of the newest stable image version   |
+| `preview`                                | the newest prerelease of the lowest version in prerelease above `latest`, else `latest` |
+| `pr-123`                                 | the default variation of the newest push to an open pull request, on ghcr.io only       |
+
+The `fips` variation has the same tags with `-fips` after the cloudflared version, `2026.11.0-fips-v0.1.0`, `2026.11-fips`, `latest-fips` and `preview-fips`.
