@@ -1,0 +1,9 @@
+{
+	"cloudflared": {
+		"latest": {
+			"version": "2026.10.7",
+			"repository": "https://github.com/cloudflare/cloudflared",
+			"commit": "872b241f94871665c1c157adefcf90c11f0ead96"
+		}
+	}
+}
