@@ -1,0 +1,213 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - next
+      - v[0-9]+.x
+      - v[0-9]+.[0-9]+.x
+      - release/v[0-9]+.[0-9]+
+    paths:
+      - release.json
+      - src/upstream.json
+  workflow_dispatch:
+
+permissions: {}
+
+cache-mode: none
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+  queue: max
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    name: Plan releases
+    if: ${{ github.repository == 'peakimages/cloudflared' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04 # https://github.com/actions/runner-images
+    timeout-minutes: 10
+    outputs:
+      releases: ${{ steps.plan.outputs.releases }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Plan the releases
+        id: plan
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          releases="$(scripts/plan-version.sh --release)"
+          echo "releases=$releases" | tee -a "$GITHUB_OUTPUT"
+
+  build:
+    name: Build
+    needs: plan
+    if: ${{ needs.plan.outputs.releases != '[]' }}
+    permissions:
+      contents: read
+    uses: $/.github/workflows/build.yaml
+    with:
+      lines: ${{ needs.plan.outputs.releases }}
+
+  publish:
+    name: Publish release (${{ matrix.release.tag }})
+    needs: [plan, build]
+    permissions:
+      contents: write # create the GitHub release and its tag
+      packages: write # push the tested images to ghcr.io
+    environment:
+      name: release
+      deployment: false
+    runs-on: ubuntu-26.04 # https://github.com/actions/runner-images
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        release: ${{ fromJSON(needs.plan.outputs.releases) }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download the tested images
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: image-${{ matrix.release.name }}-*
+          path: ${{ runner.temp }}/images
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to docker.io
+        uses: docker/login-action@v4.8.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push the tested images of each variant
+        env:
+          NAME: ${{ matrix.release.name }}
+          TAG: ${{ matrix.release.tag }}
+          VARIANTS: default,fips
+        run: |
+          for variant in ${VARIANTS//,/ }; do
+            sources=()
+            for index in "$RUNNER_TEMP/images/image-$NAME-$variant-"*/index.json; do
+              sources+=("oci-layout://${index%/index.json}@$(jq -r '.manifests[0].digest' "$index")")
+            done
+            labels="$(docker buildx imagetools inspect "${sources[0]}" --format '{{ json .Image.Config.Labels }}' \
+              | jq -r 'to_entries[] | "--annotation=index:\(.key)=\(.value)"')"
+            mapfile -t annotations <<< "$labels"
+            tag="${TAG#v}"
+            [ "$variant" = default ] || tag="${tag%%-v*}-$variant-v${tag#*-v}"
+            for repository in ghcr.io/peakimages/cloudflared docker.io/peakimages/cloudflared; do
+              docker buildx imagetools create "${annotations[@]}" --tag "$repository:$tag" "${sources[@]}"
+            done
+          done
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ matrix.release.tag }}
+          IMAGE_VERSION: ${{ matrix.release.image }}
+          CLOUDFLARED_VERSION: ${{ matrix.release.version }}
+          PREVIOUS: ${{ matrix.release.previous }}
+        run: |
+          args=(--title "$TAG" --target "$GITHUB_SHA" --notes-file "$RUNNER_TEMP/notes.md" --latest=false)
+          heading="## [v$IMAGE_VERSION]"
+          [[ "$IMAGE_VERSION" != *-* ]] || { args+=(--prerelease); heading="## [Unreleased]"; }
+          if [ -z "$PREVIOUS" ]; then
+            awk -v heading="$heading" 'index($0, heading) == 1 { inside = 1; next } /^## / { inside = 0 } inside { sub(/^### /, "## "); print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          else
+            cat > "$RUNNER_TEMP/notes.md" <<NOTES
+          Updates cloudflared to v$CLOUDFLARED_VERSION, see its [release notes](https://github.com/cloudflare/cloudflared/releases/tag/$CLOUDFLARED_VERSION).
+
+          ## Changed
+
+          - cloudflared from v$PREVIOUS to v$CLOUDFLARED_VERSION
+          NOTES
+          fi
+          gh release create "$TAG" "${args[@]}"
+
+  tags:
+    name: Move tags
+    needs: publish
+    permissions:
+      contents: write # mark the GitHub release that latest points at as the latest release
+      packages: write # move the tags on ghcr.io
+    environment:
+      name: release
+      deployment: false
+    runs-on: ubuntu-26.04 # https://github.com/actions/runner-images
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Plan the moving tags
+        id: plan
+        run: |
+          tags="$(scripts/plan-version.sh --tags)"
+          echo "tags=$tags" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to docker.io
+        uses: docker/login-action@v4.8.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Move the tags of each variant on ghcr.io and docker.io
+        env:
+          TAGS: ${{ steps.plan.outputs.tags }}
+          VARIANTS: default,fips
+        run: |
+          jq -r 'to_entries[] | "\(.key) \(.value)"' <<< "$TAGS" | while read -r tag release; do
+            for variant in ${VARIANTS//,/ }; do
+              from="${tag#v}" to="${release#v}"
+              [ "$variant" = default ] || { from="$from-$variant"; to="${to%%-v*}-$variant-v${to#*-v}"; }
+              for repository in ghcr.io/peakimages/cloudflared docker.io/peakimages/cloudflared; do
+                docker buildx imagetools create --tag "$repository:$from" "$repository:$to"
+              done
+            done
+          done
+
+      - name: Mark the latest GitHub release
+        if: ${{ fromJSON(steps.plan.outputs.tags).latest }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LATEST: ${{ fromJSON(steps.plan.outputs.tags).latest }}
+        run: gh release edit "$LATEST" --latest
+
+  merge:
+    name: Merge forward
+    needs: publish
+    permissions:
+      contents: write # push the merges
+      pull-requests: write # open a pull request when a merge conflicts
+    uses: $/.github/workflows/merge-forward.yaml
