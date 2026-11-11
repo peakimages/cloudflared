@@ -103,6 +103,30 @@ cloudflared reads its settings from environment variables, override them with `-
 | `TUNNEL_TOKEN`   | unset             | Token of the tunnel from the Cloudflare dashboard. Set it here rather than with `--token`, which puts it on the command line of the process                                        |
 | `TUNNEL_METRICS` | `127.0.0.1:20241` | Address of the metrics port. `0.0.0.0:20241` opens it to Prometheus, a Kubernetes HTTP probe and `cloudflared tunnel diag` on the host, and to every container on the same network |
 
+## Attestations
+
+Every image carries an SBOM and a provenance attestation.
+
+The SBOM lists the packages of the image, cloudflared, its Go modules and the CA bundle:
+
+```sh
+docker buildx imagetools inspect peakimages/cloudflared:latest --format '{{ json .SBOM }}'
+```
+
+The provenance records how the image was built:
+
+```sh
+docker buildx imagetools inspect peakimages/cloudflared:latest --format '{{ json .Provenance }}'
+```
+
+A scanner lists the same packages, Trivy names cloudflared by its Go module alone:
+
+```sh
+syft peakimages/cloudflared:latest
+grype peakimages/cloudflared:latest
+trivy image peakimages/cloudflared:latest
+```
+
 ## Releases
 
 Every cloudflared release becomes a new version of the image. A check for new cloudflared releases runs twice a day.

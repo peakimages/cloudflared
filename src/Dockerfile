@@ -12,8 +12,6 @@ ARG GO_FIPS140_MODULE=v1.0.0-c2097c7c
 ARG BASE_IMAGE=alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 # https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/ca-certificates-bundle
 ARG CA_CERTIFICATES_VERSION=20261020-r0
-# https://github.com/anchore/syft/tree/v1.57.1/schema/json
-ARG SYFT_SCHEMA_VERSION=16.1.13
 
 # Set by the build workflow
 ARG VARIANT
@@ -65,24 +63,20 @@ FROM ${BASE_IMAGE} AS build
 
 ARG CLOUDFLARED_VERSION
 ARG CA_CERTIFICATES_VERSION
-ARG SYFT_SCHEMA_VERSION
-ARG VARIANT
-ARG IMAGE_VERSION
 
-# jq is only used during the build stage, so it is not pinned to a specific version
+# binutils and jq are only used during the build stage, so they are not pinned to a specific version
 # hadolint ignore=DL3018
-RUN apk add --no-cache jq ca-certificates-bundle=${CA_CERTIFICATES_VERSION}
+RUN apk add --no-cache binutils jq ca-certificates-bundle=${CA_CERTIFICATES_VERSION}
 
 WORKDIR /src
-COPY --from=compile /src/cloudflared /src/cloudflared.json /src/
+COPY --from=compile /src/cloudflared /src/
 COPY --chmod=0644 rootfs.sh /src/
 RUN sh /src/rootfs.sh
 
-# A scratch image has no package database for the SBOM scanner to read, this syft JSON document takes its place
 COPY --chmod=0644 sbom.sh /src/
-RUN sh /src/sbom.sh "peakimages/cloudflared:${CLOUDFLARED_VERSION}${VARIANT:+-}${VARIANT}-v${IMAGE_VERSION:?}" \
-        "generic|cloudflared|${CLOUDFLARED_VERSION}|Apache-2.0|$(jq -r .repository cloudflared.json)/archive/$(jq -r .commit cloudflared.json).tar.gz|cloudflare:cloudflared" \
-        "apk|ca-certificates-bundle|alpinelinux:ca-certificates|/etc/ssl/certs/ca-certificates.crt"
+RUN sh /src/sbom.sh peakimages/cloudflared "PeakImages cloudflared" \
+        "generic|cloudflared|${CLOUDFLARED_VERSION}|Apache-2.0|cloudflare:cloudflared|/usr/local/bin/cloudflared" \
+        "apk|ca-certificates-bundle|/etc/ssl/certs/ca-certificates.crt"
 
 FROM scratch AS final
 
