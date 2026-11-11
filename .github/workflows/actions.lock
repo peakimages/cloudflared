@@ -11,6 +11,9 @@ workflows:
         - 'docker/setup-qemu-action@v4.4.0'
     '.github/workflows/check-upstream.yaml':
         - 'actions/checkout@v7.0.1'
+    '.github/workflows/clean-manifests.yaml':
+        - 'actions/checkout@v7.0.1'
+        - 'actions/upload-artifact@v7.0.2'
     '.github/workflows/merge-forward.yaml':
         - 'actions/checkout@v7.0.1'
     '.github/workflows/pull-request.yaml':
