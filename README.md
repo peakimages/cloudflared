@@ -132,3 +132,7 @@ trivy image peakimages/cloudflared:latest
 Every cloudflared release becomes a new version of the image. A check for new cloudflared releases runs twice a day.
 
 The image version follows semantic versioning independently of cloudflared. Changes to the image are listed in [CHANGELOG.md](CHANGELOG.md).
+
+## Trademarks
+
+This image is built and published by PeakImages. All third-party product names, logos and trademarks are the property of their respective owners and are used solely for identification. PeakImages claims no interest in those marks, and no affiliation, sponsorship or endorsement is implied.
