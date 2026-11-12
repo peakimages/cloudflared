@@ -101,6 +101,13 @@ jobs:
           image: docker.io/tonistiigi/binfmt:qemu-v10.2.3-68@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0 # https://github.com/tonistiigi/binfmt/releases/tag/deploy/v10.2.3-68
           cache-image: false
 
+      - name: Switch Docker to the containerd image store
+        if: ${{ matrix.runner == 'ubuntu-24.04' }} # until https://github.com/actions/runner-images/issues/14790 is fixed
+        run: |
+          config="$(sudo cat /etc/docker/daemon.json 2> /dev/null || echo '{}')"
+          jq '.features."containerd-snapshotter" = true' <<< "$config" | sudo tee /etc/docker/daemon.json > /dev/null
+          sudo systemctl restart docker
+
       - name: Load the image
         run: tar -cf - -C "$RUNNER_TEMP/image" . | docker load
 
