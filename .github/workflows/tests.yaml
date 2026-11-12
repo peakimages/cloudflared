@@ -81,7 +81,7 @@ jobs:
             qemu: true
           - platform: linux/386
             arch: "386"
-            runner: ubuntu-26.04
+            runner: ubuntu-24.04 # until https://github.com/actions/runner-images/issues/14790 is fixed
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7.0.1
