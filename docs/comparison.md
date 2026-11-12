@@ -17,7 +17,7 @@
 | PIE[^6]                            | ❌                                                         | ❌                                                | ❌                                                 | ❌                                                         |
 | Native health check                | ✅                                                         | ❌                                                | ❌                                                 | ❌                                                         |
 | Private metrics port[^7]           | ✅ (`127.0.0.1:20241`)                                     | ❌ (all interfaces)                               | ❌ (all interfaces)                                | ❌ (all interfaces)                                        |
-| FIPS 140-3 variation[^8]           | ✅ (`fips`, free, validated Go module)                     | ❌                                                | ⚠️ (paid subscription)                             | ❌                                                         |
+| FIPS 140-3 flavor[^8]              | ✅ (`fips`, free, validated Go module)                     | ❌                                                | ⚠️ (paid subscription)                             | ❌                                                         |
 | No shell                           | ✅                                                         | ✅                                                | ✅                                                 | ✅                                                         |
 | No package manager                 | ✅                                                         | ✅                                                | ✅                                                 | ✅                                                         |
 | Packages[^9]                       | ✅ (CA bundle only)                                        | ❌ (10 Debian packages, glibc and OpenSSL unused) | ⚠️ (4 Debian packages, cloudflared as one of them) | ⚠️ (CA bundle, not declared)                               |
@@ -47,7 +47,7 @@
 
 [^7]: The metrics port also serves profiles on `/debug/pprof`, the ingress rules on `/config` and diagnostics on `/diag`, and on all interfaces every container on the same network can read them.
 
-[^8]: Only a validated module counts for FIPS 140-3. The `fips` variation is built with the Go Cryptographic Module v1.0.0, CMVP certificate 5247, https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5247, and is the only FIPS image of cloudflared that is free. Cloudflare publishes no FIPS image, its FIPS packages are built with `GOFIPS140=latest`, the module of the Go toolchain, which is not validated.
+[^8]: Only a validated module counts for FIPS 140-3. The `fips` flavor is built with the Go Cryptographic Module v1.0.0, CMVP certificate 5247, https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/5247, and is the only FIPS image of cloudflared that is free. Cloudflare publishes no FIPS image, its FIPS packages are built with `GOFIPS140=latest`, the module of the Go toolchain, which is not validated.
 
 [^9]: cloudflared needs the CA bundle and nothing else, it logs in UTC and reads no time zone data, so every other package is more to patch and to scan.
 

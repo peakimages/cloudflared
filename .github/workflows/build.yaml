@@ -65,7 +65,7 @@ jobs:
         run: scripts/patch-dependencies.sh --check
 
   build:
-    name: Build image (${{ matrix.line.name }}, ${{ matrix.variant }}, ${{ matrix.platform }})
+    name: Build image (${{ matrix.line.name }}, ${{ matrix.flavor }}, ${{ matrix.platform }})
     needs: [plan, patch]
     permissions:
       contents: read
@@ -74,7 +74,7 @@ jobs:
     strategy:
       matrix:
         line: ${{ fromJSON(needs.plan.outputs.lines) }}
-        variant: [default, fips]
+        flavor: [default, fips]
         platform: [linux/amd64, linux/arm64, linux/arm/v7, linux/arm/v6, linux/riscv64, linux/ppc64le, linux/s390x, linux/386]
         include:
           - platform: linux/amd64
@@ -141,7 +141,7 @@ jobs:
           outputs: type=oci,dest=${{ runner.temp }}/image,tar=false,rewrite-timestamp=true,compression=zstd,compression-level=11,force-compression=true
           build-args: |
             CLOUDFLARED_VERSION=${{ matrix.line.version }}
-            VARIANT=${{ matrix.variant != 'default' && matrix.variant || '' }}
+            FLAVOR=${{ matrix.flavor != 'default' && matrix.flavor || '' }}
             IMAGE_VERSION=${{ needs.plan.outputs.image }}
             SOURCE_DATE_EPOCH=${{ steps.args.outputs.epoch }}
             CREATED=${{ steps.args.outputs.created }}
@@ -152,7 +152,7 @@ jobs:
       - name: Upload the image
         uses: actions/upload-artifact@v7.0.2
         with:
-          name: image-${{ matrix.line.name }}-${{ matrix.variant }}-${{ matrix.arch }}
+          name: image-${{ matrix.line.name }}-${{ matrix.flavor }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/image
           if-no-files-found: error
           retention-days: 1

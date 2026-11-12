@@ -4,7 +4,7 @@ set -euo pipefail
 OPTION="$*"
 LIMIT="${2:-}"
 IMAGE=peakimages/cloudflared
-VARIANTS=""
+FLAVORS=""
 KEEP_TAG_PATTERN='^((latest|preview|[0-9]+(\.[0-9]+){0,2})(-fips)?|[0-9]+\.[0-9]+\.[0-9]+(-fips)?-v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?)$'
 KEEP_TAG_EXCEPTIONS=""
 MIN_AGE_DAYS=1
@@ -124,7 +124,7 @@ select_kept_tags() {
 		|| die "could not list the git tags of github.com/$IMAGE"
 	gh pr list --repo "$IMAGE" --state open --limit 1000 --json number --jq '.[] | "pr-\(.number)"' > "$WORK_DIR/pull-requests.txt" \
 		|| die "gh could not list the open pull requests of $IMAGE"
-	awk -v variants="$VARIANTS" '{ print; n = split(variants, variant, ","); for (i = 1; i <= n; i++) print $0 "-" variant[i] }' "$WORK_DIR/pull-requests.txt" >> "$WORK_DIR/keep.txt"
+	awk -v flavors="$FLAVORS" '{ print; n = split(flavors, flavor, ","); for (i = 1; i <= n; i++) print $0 "-" flavor[i] }' "$WORK_DIR/pull-requests.txt" >> "$WORK_DIR/keep.txt"
 	tr ',' '\n' <<< "$KEEP_TAG_EXCEPTIONS" >> "$WORK_DIR/keep.txt"
 	{
 		grep -E "$KEEP_TAG_PATTERN" "$WORK_DIR/tags.txt" || true

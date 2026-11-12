@@ -8,7 +8,7 @@
 
 ## Introduction
 
-A minimal and hardened image of cloudflared, the Cloudflare Tunnel client. It is compiled from source, a third of the size of the official image and patched without waiting for a cloudflared release, with a FIPS 140-3 variation and builds for eight platforms.
+A minimal and hardened image of cloudflared, the Cloudflare Tunnel client. It is compiled from source, a third of the size of the official image and patched without waiting for a cloudflared release, with a FIPS 140-3 flavor and builds for eight platforms.
 
 > [!IMPORTANT]
 > `peakimages/cloudflared` is currently **v0** and subject to breaking changes prior to `v1.0.0`. Pin to a specific version like `peakimages/cloudflared:2026.11.0-v0.1.0` to avoid breaking changes.
@@ -21,7 +21,7 @@ cloudflared is one Go binary that needs nothing but CA certificates. This image 
 - ✅ Private Metrics: The metrics port listens on `127.0.0.1`, it also serves the ingress rules, diagnostics and profiles
 - ✅ Smaller: Compiled from the release tag without symbol table and debug information, a third of the size of the official image
 - ✅ Patched Dependencies: A Go module with a known vulnerability is raised before Cloudflare releases the update, see [PATCHES.md](PATCHES.md)
-- ✅ FIPS 140-3: A `fips` variation built with Go's certified cryptographic module
+- ✅ FIPS 140-3: A `fips` flavor built with Go's certified cryptographic module
 - ✅ Verified Source: The release tag must point to the pinned commit and every Go module must match `go.sum` before each compilation
 - ✅ Modern Architecture: Native health check, OCI labels, reproducible builds, provenance and SBOM attestations
 - ✅ Always Current: GitHub is checked twice a day and new cloudflared releases become new images
@@ -64,18 +64,18 @@ services:
 
 ## Available Image Variations
 
-All tags follow this pattern, the default variation leaves out `-{{variation}}`:
+All tags follow this pattern, the default leaves out `-{{flavor}}`:
 
 ```sh
-peakimages/cloudflared:{{cloudflared-version}}-{{variation}}-v{{image-version}}
+peakimages/cloudflared:{{cloudflared-version}}-{{flavor}}-v{{image-version}}
 ```
 
-| Variation | Best For                                                    | Example                                        |
-| --------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| default   | Every tunnel, from Docker Compose to Kubernetes             | `peakimages/cloudflared:2026.11.0-v0.1.0`      |
-| `fips`    | Environments that require FIPS 140-3 validated cryptography | `peakimages/cloudflared:2026.11.0-fips-v0.1.0` |
+| Flavor  | Variant   | Best For                                                    | Example                                        |
+| ------- | --------- | ----------------------------------------------------------- | ---------------------------------------------- |
+| default | `runtime` | Every tunnel, from Docker Compose to Kubernetes             | `peakimages/cloudflared:2026.11.0-v0.1.0`      |
+| `fips`  | `runtime` | Environments that require FIPS 140-3 validated cryptography | `peakimages/cloudflared:2026.11.0-fips-v0.1.0` |
 
-The `fips` variation only uses approved algorithms, TLS with AES-GCM and `X25519MLKEM768` or the NIST curves for the key exchange, and connects to the Cloudflare edge like the default.
+The `fips` flavor only uses approved algorithms, TLS with AES-GCM and `X25519MLKEM768` or the NIST curves for the key exchange, and connects to the Cloudflare edge like the default.
 
 ### Tags
 
@@ -85,7 +85,7 @@ The `fips` variation only uses approved algorithms, TLS with AES-GCM and `X25519
 | `2026.11.0`, `2026.11`, `2026`                  | Newest release of that cloudflared version, month or year                        |
 | `latest`                                        | Newest release                                                                   |
 | `preview`                                       | Newest prerelease, like `2026.11.0-v0.2.0-beta.1`, until its release replaces it |
-| `2026.11.0-fips`, `latest-fips`, `preview-fips` | The same for the `fips` variation                                                |
+| `2026.11.0-fips`, `latest-fips`, `preview-fips` | The same for the `fips` flavor                                                   |
 
 ### Registries
 

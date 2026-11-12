@@ -14,7 +14,7 @@ ARG BASE_IMAGE=alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d
 ARG CA_CERTIFICATES_VERSION=20261020-r0
 
 # Set by the build workflow
-ARG VARIANT
+ARG FLAVOR
 ARG IMAGE_VERSION
 ARG SOURCE_DATE_EPOCH
 ARG CREATED
@@ -24,7 +24,7 @@ FROM --platform=${BUILDPLATFORM} ${GO_IMAGE} AS compile
 
 ARG CLOUDFLARED_VERSION
 ARG GO_FIPS140_MODULE
-ARG VARIANT
+ARG FLAVOR
 ARG TARGETARCH
 ARG TARGETVARIANT
 
@@ -53,7 +53,7 @@ RUN go mod download \
 # The go build of the Makefile without symbol table and DWARF:
 # https://github.com/cloudflare/cloudflared/blob/master/Makefile
 RUN build_type="" fips140=off \
-    && if [ "${VARIANT}" = fips ]; then build_type=FIPS fips140="${GO_FIPS140_MODULE}"; fi \
+    && if [ "${FLAVOR}" = fips ]; then build_type=FIPS fips140="${GO_FIPS140_MODULE}"; fi \
     && build_time="$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d-%H:%M UTC')" \
     && GOARCH="${TARGETARCH}" GOARM="${TARGETVARIANT#v}" GOFIPS140="${fips140}" go build -o /src/cloudflared \
         -ldflags="-s -w -X 'main.Version=${CLOUDFLARED_VERSION}' -X 'main.BuildTime=${build_time}' -X 'main.BuildType=${build_type}'" \
@@ -82,7 +82,7 @@ FROM scratch AS final
 
 ARG CLOUDFLARED_VERSION
 ARG CA_CERTIFICATES_VERSION
-ARG VARIANT
+ARG FLAVOR
 ARG IMAGE_VERSION
 ARG CREATED
 ARG GIT_SHA
@@ -91,7 +91,7 @@ COPY --from=build /rootfs/ /
 
 LABEL org.opencontainers.image.title="cloudflared" \
     org.opencontainers.image.description="Minimal, hardened cloudflared Docker image built from the tagged source." \
-    org.opencontainers.image.version="${CLOUDFLARED_VERSION}${VARIANT:+-}${VARIANT}-v${IMAGE_VERSION}" \
+    org.opencontainers.image.version="${CLOUDFLARED_VERSION}${FLAVOR:+-}${FLAVOR}-v${IMAGE_VERSION}" \
     org.opencontainers.image.created="${CREATED}" \
     org.opencontainers.image.revision="${GIT_SHA}" \
     org.opencontainers.image.licenses="Apache-2.0 AND MPL-2.0 AND MIT" \
@@ -102,7 +102,7 @@ LABEL org.opencontainers.image.title="cloudflared" \
     org.opencontainers.image.documentation="https://github.com/peakimages/cloudflared#readme" \
     org.opencontainers.image.base.name="scratch" \
     dev.peakimages.cloudflared.version="${CLOUDFLARED_VERSION}" \
-    dev.peakimages.cloudflared.variant="${VARIANT:-default}" \
+    dev.peakimages.cloudflared.variant="${FLAVOR:-default}" \
     dev.peakimages.ca-certificates.version="${CA_CERTIFICATES_VERSION}" \
     dev.peakimages.image.version="${IMAGE_VERSION}"
 

@@ -1,6 +1,6 @@
 # Releases
 
-Every release is tagged `v<cloudflared version>-v<image version>`, such as `v2026.11.0-v0.1.0`. The `fips` variation is published as `2026.11.0-fips-v0.1.0`, the git tag and the GitHub release are those of the default variation.
+Every release is tagged `v<cloudflared version>-v<image version>`, such as `v2026.11.0-v0.1.0`. The `fips` flavor is published as `2026.11.0-fips-v0.1.0`, the git tag and the GitHub release are those of the default image.
 
 > [!IMPORTANT]
 > A push that changes `release.json` or `src/upstream.json` releases the versions they set, unless they are released already. Run `scripts/plan-version.sh` first to see what a push releases.
@@ -146,7 +146,7 @@ A Go module of cloudflared with a known vulnerability is raised in `src/patches/
 
 ## Pull requests
 
-The pull request workflow builds every pull request and publishes the default variation of the line `latest` of a pull request from a branch of this repository as `ghcr.io/peakimages/cloudflared:pr-<number>`. Its version is `<base>-pr.<number>`:
+The pull request workflow builds every pull request and publishes the default image of the line `latest` of a pull request from a branch of this repository as `ghcr.io/peakimages/cloudflared:pr-<number>`. Its version is `<base>-pr.<number>`:
 
 - Into `next`: `1.4.0-beta.1-pr.1234` after `1.4.0-beta.1`, or `1.5.0-alpha.0-pr.1234` before the first alpha of 1.5.0
 - Into `main`: `1.3.4-pr.1234`
@@ -162,6 +162,6 @@ The pull request workflow builds every pull request and publishes the default va
 | `2026.11.0-v0.1.0`                       | one release, it never moves                                                             |
 | `latest`, `2026.11.0`, `2026.11`, `2026` | `2026.11.0-v0.1.0`, the newest cloudflared version of the newest stable image version   |
 | `preview`                                | the newest prerelease of the lowest version in prerelease above `latest`, else `latest` |
-| `pr-123`                                 | the default variation of the newest push to an open pull request, on ghcr.io only       |
+| `pr-123`                                 | the default image of the newest push to an open pull request, on ghcr.io only           |
 
-The `fips` variation has the same tags with `-fips` after the cloudflared version, `2026.11.0-fips-v0.1.0`, `2026.11-fips`, `latest-fips` and `preview-fips`.
+The `fips` flavor has the same tags with `-fips` after the cloudflared version, `2026.11.0-fips-v0.1.0`, `2026.11-fips`, `latest-fips` and `preview-fips`.

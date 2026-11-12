@@ -100,22 +100,22 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Push the tested images of each variant
+      - name: Push the tested images of each flavor
         env:
           NAME: ${{ matrix.release.name }}
           TAG: ${{ matrix.release.tag }}
-          VARIANTS: default,fips
+          FLAVORS: default,fips
         run: |
-          for variant in ${VARIANTS//,/ }; do
+          for flavor in ${FLAVORS//,/ }; do
             sources=()
-            for index in "$RUNNER_TEMP/images/image-$NAME-$variant-"*/index.json; do
+            for index in "$RUNNER_TEMP/images/image-$NAME-$flavor-"*/index.json; do
               sources+=("oci-layout://${index%/index.json}@$(jq -r '.manifests[0].digest' "$index")")
             done
             labels="$(docker buildx imagetools inspect "${sources[0]}" --format '{{ json .Image.Config.Labels }}' \
               | jq -r 'to_entries[] | "--annotation=index:\(.key)=\(.value)"')"
             mapfile -t annotations <<< "$labels"
             tag="${TAG#v}"
-            [ "$variant" = default ] || tag="${tag%%-v*}-$variant-v${tag#*-v}"
+            [ "$flavor" = default ] || tag="${tag%%-v*}-$flavor-v${tag#*-v}"
             for repository in ghcr.io/peakimages/cloudflared docker.io/peakimages/cloudflared; do
               docker buildx imagetools create "${annotations[@]}" --tag "$repository:$tag" "${sources[@]}"
             done
@@ -182,15 +182,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Move the tags of each variant on ghcr.io and docker.io
+      - name: Move the tags of each flavor on ghcr.io and docker.io
         env:
           TAGS: ${{ steps.plan.outputs.tags }}
-          VARIANTS: default,fips
+          FLAVORS: default,fips
         run: |
           jq -r 'to_entries[] | "\(.key) \(.value)"' <<< "$TAGS" | while read -r tag release; do
-            for variant in ${VARIANTS//,/ }; do
+            for flavor in ${FLAVORS//,/ }; do
               from="${tag#v}" to="${release#v}"
-              [ "$variant" = default ] || { from="$from-$variant"; to="${to%%-v*}-$variant-v${to#*-v}"; }
+              [ "$flavor" = default ] || { from="$from-$flavor"; to="${to%%-v*}-$flavor-v${to#*-v}"; }
               for repository in ghcr.io/peakimages/cloudflared docker.io/peakimages/cloudflared; do
                 docker buildx imagetools create --tag "$repository:$from" "$repository:$to"
               done
