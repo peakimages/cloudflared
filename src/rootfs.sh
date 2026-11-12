@@ -21,6 +21,7 @@ install_cloudflared() {
 		"cloudflared version $CLOUDFLARED_VERSION "*) ;;
 		*) die "cloudflared reports $reported, expected cloudflared version $CLOUDFLARED_VERSION" ;;
 	esac
+	[ "${FLAVOR:-}" != fips ] || echo "$reported" | grep -q ' with FIPS)$' || die "cloudflared reports $reported, expected a FIPS build"
 }
 
 install_ca_bundle() {

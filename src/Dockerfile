@@ -63,6 +63,7 @@ FROM ${BASE_IMAGE} AS build
 
 ARG CLOUDFLARED_VERSION
 ARG CA_CERTIFICATES_VERSION
+ARG FLAVOR
 
 # binutils and jq are only used during the build stage, so they are not pinned to a specific version
 # hadolint ignore=DL3018
