@@ -10,6 +10,7 @@ ARG GO_IMAGE=golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae4
 ARG GO_FIPS140_MODULE=v1.0.0-c2097c7c
 # https://hub.docker.com/_/alpine/tags?name=3.24.4
 ARG BASE_IMAGE=alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
+ARG DISTRO=alpine-3.24
 # https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/ca-certificates-bundle
 ARG CA_CERTIFICATES_VERSION=20261020-r0
 
@@ -81,8 +82,8 @@ RUN sh /src/sbom.sh peakimages/cloudflared "PeakImages cloudflared" \
 
 FROM scratch AS final
 
+ARG DISTRO
 ARG CLOUDFLARED_VERSION
-ARG CA_CERTIFICATES_VERSION
 ARG FLAVOR
 ARG IMAGE_VERSION
 ARG CREATED
@@ -93,19 +94,23 @@ COPY --from=build /rootfs/ /
 LABEL org.opencontainers.image.title="cloudflared" \
     org.opencontainers.image.description="Minimal, hardened cloudflared Docker image built from the tagged source." \
     org.opencontainers.image.version="${CLOUDFLARED_VERSION}${FLAVOR:+-}${FLAVOR}-v${IMAGE_VERSION}" \
-    org.opencontainers.image.created="${CREATED}" \
     org.opencontainers.image.revision="${GIT_SHA}" \
-    org.opencontainers.image.licenses="Apache-2.0 AND MPL-2.0 AND MIT" \
+    org.opencontainers.image.created="${CREATED}" \
+    org.opencontainers.image.licenses="AGPL-3.0-or-later AND Apache-2.0" \
     org.opencontainers.image.authors="PeakImages" \
     org.opencontainers.image.vendor="PeakImages" \
     org.opencontainers.image.url="https://hub.docker.com/r/peakimages/cloudflared" \
-    org.opencontainers.image.source="https://github.com/peakimages/cloudflared" \
     org.opencontainers.image.documentation="https://github.com/peakimages/cloudflared#readme" \
-    org.opencontainers.image.base.name="scratch" \
-    dev.peakimages.cloudflared.version="${CLOUDFLARED_VERSION}" \
-    dev.peakimages.cloudflared.variant="${FLAVOR:-default}" \
-    dev.peakimages.ca-certificates.version="${CA_CERTIFICATES_VERSION}" \
-    dev.peakimages.image.version="${IMAGE_VERSION}"
+    org.opencontainers.image.source="https://github.com/peakimages/cloudflared" \
+    org.opencontainers.image.base.name="" \
+    org.opencontainers.image.base.digest="" \
+    dev.peakimages.image.version="${IMAGE_VERSION}" \
+    dev.peakimages.image.upstream.version="${CLOUDFLARED_VERSION}" \
+    dev.peakimages.image.distro="${DISTRO}" \
+    dev.peakimages.image.variant="runtime" \
+    dev.peakimages.image.flavor="${FLAVOR}" \
+    dev.peakimages.image.shell="" \
+    dev.peakimages.image.package-manager=""
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     TUNNEL_METRICS=127.0.0.1:20241
