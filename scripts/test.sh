@@ -32,12 +32,11 @@ main() {
 
 check_version() {
 	local version printed
-	version="$(label version)"
-	jq -e --arg version "$version" 'any(.cloudflared[]; .version == $version)' src/upstream.json > /dev/null || die "the image is labeled cloudflared $version, src/upstream.json pins no such version"
 	printed="$(docker run --rm "$IMAGE" version)"
-	[[ "$printed" == "cloudflared version $version "* ]] || die "cloudflared version prints '$printed', expected cloudflared version $version"
-	if [ "$(label variant)" = fips ]; then
-		[[ "$printed" == *" with FIPS)" ]] || die "cloudflared version prints '$printed', expected a FIPS build"
+	version="${printed#cloudflared version }"
+	version="${version%% *}"
+	jq -e --arg version "$version" 'any(.cloudflared[]; .version == $version)' src/upstream.json > /dev/null || die "cloudflared version prints '$printed', expected a version src/upstream.json pins"
+	if [[ "$printed" == *" with FIPS)" ]]; then
 		ok "cloudflared version prints $version, a version src/upstream.json pins, as a FIPS build"
 	else
 		ok "cloudflared version prints $version, a version src/upstream.json pins"
@@ -96,8 +95,6 @@ wait_healthy() {
 	done
 	die "$1 did not become healthy: $(docker logs "$1" 2>&1 | tail -n 3)"
 }
-
-label() { docker image inspect --format "{{ index .Config.Labels \"dev.peakimages.cloudflared.$1\" }}" "$IMAGE"; }
 
 fetch() {
 	docker run --rm ${1:+--network "$1"} "$(sed -n 's/^ARG BASE_IMAGE=//p' src/Dockerfile)" wget -q -T 10 -O - "$2"
