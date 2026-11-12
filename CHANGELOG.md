@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v0.1.1] - 2026-11-13
+
+### Security
+
+- Patched two Go modules of cloudflared with known vulnerabilities
+  - `golang.org/x/net` from v0.61.0 to v0.62.0 for [CVE-2026-78661](https://www.cve.org/CVERecord?id=CVE-2026-78661) and [CVE-2026-97045](https://www.cve.org/CVERecord?id=CVE-2026-97045)
+  - `golang.org/x/crypto` from v0.58.0 to v0.59.0 for [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932)
+
 ## [v0.1.0] - 2026-11-12
 
 ### Added
