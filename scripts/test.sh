@@ -20,6 +20,7 @@ trap cleanup EXIT
 main() {
 	[[ "$OPTION" =~ ^[^-][^[:space:]]*$ ]] || die "'$OPTION' is not an option, expected an image"
 	heading "Testing $IMAGE"
+	read_platform
 	check_version
 	check_default_command
 	heading "Tunnel"
@@ -30,9 +31,14 @@ main() {
 	heading "All tests passed for $IMAGE"
 }
 
+read_platform() {
+	platform="$(docker image inspect -f '{{.Os}}/{{.Architecture}}{{with .Variant}}/{{.}}{{end}}' "$IMAGE" 2> /dev/null)" || die "$IMAGE is not a local image, build it first"
+	ok "$IMAGE is built for $platform"
+}
+
 check_version() {
 	local version printed
-	printed="$(docker run --rm "$IMAGE" version)"
+	printed="$(docker run --rm --platform "$platform" "$IMAGE" version)"
 	version="${printed#cloudflared version }"
 	version="${version%% *}"
 	jq -e --arg version "$version" 'any(.cloudflared[]; .version == $version)' src/upstream.json > /dev/null || die "cloudflared version prints '$printed', expected a version src/upstream.json pins"
@@ -45,14 +51,14 @@ check_version() {
 
 check_default_command() {
 	local printed
-	printed="$(docker run --rm -e TUNNEL_TOKEN=invalid "$IMAGE" 2>&1)" && die "the image ran without a command and with an invalid TUNNEL_TOKEN, expected cloudflared tunnel run to reject the token"
+	printed="$(docker run --rm --platform "$platform" -e TUNNEL_TOKEN=invalid "$IMAGE" 2>&1)" && die "the image ran without a command and with an invalid TUNNEL_TOKEN, expected cloudflared tunnel run to reject the token"
 	[[ "$printed" == "Provided Tunnel token is not valid."* ]] || die "the image prints '$printed' without a command, expected cloudflared tunnel run to reject TUNNEL_TOKEN"
 	ok "the image runs cloudflared tunnel run by default and reads the token from TUNNEL_TOKEN"
 }
 
 start_tunnel() {
 	docker network create "$CONTAINER" > /dev/null
-	docker run -d --name "$CONTAINER" --network "$CONTAINER" --read-only --cap-drop ALL --security-opt no-new-privileges \
+	docker run -d --name "$CONTAINER" --platform "$platform" --network "$CONTAINER" --read-only --cap-drop ALL --security-opt no-new-privileges \
 		--health-interval 2s --health-start-period 1s "$IMAGE" tunnel --hello-world > /dev/null
 	wait_healthy "$CONTAINER"
 	ok "a quick tunnel connects and passes the health check with a read-only root filesystem and all capabilities dropped"
