@@ -138,7 +138,7 @@ jobs:
             awk -v heading="$heading" 'index($0, heading) == 1 { inside = 1; next } /^## / { inside = 0 } inside { sub(/^### /, "## "); print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
           else
             cat > "$RUNNER_TEMP/notes.md" <<NOTES
-          Updates cloudflared to v$CLOUDFLARED_VERSION, see its [release notes](https://github.com/cloudflare/cloudflared/releases/tag/$CLOUDFLARED_VERSION).
+          Updates cloudflared to v$CLOUDFLARED_VERSION, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/$CLOUDFLARED_VERSION/RELEASE_NOTES).
 
           ## Changed
 
