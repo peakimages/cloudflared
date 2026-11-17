@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v0.1.2] - 2026-11-17
+
+### Security
+
+- Patched two OpenTelemetry modules of cloudflared with a known vulnerability
+  - `go.opentelemetry.io/otel/sdk` and `go.opentelemetry.io/otel/trace` from v1.45.0 to v1.47.0 for [CVE-2026-128085](https://www.cve.org/CVERecord?id=CVE-2026-128085)
+
 ## [v0.1.1] - 2026-11-13
 
 ### Security
