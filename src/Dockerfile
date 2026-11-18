@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Set by scripts/check-upstream.sh
-ARG CLOUDFLARED_VERSION=2026.11.0
+ARG CLOUDFLARED_VERSION=2026.11.1
 
 # Dependencies
 # https://hub.docker.com/_/golang/tags?name=1.27.4-alpine3.24
