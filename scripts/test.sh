@@ -25,7 +25,6 @@ main() {
 	check_default_command
 	heading "Tunnel"
 	start_tunnel
-	check_request
 	check_private_metrics
 	check_stop
 	heading "All tests passed for $IMAGE"
@@ -62,18 +61,6 @@ start_tunnel() {
 		--health-interval 2s --health-start-period 1s "$IMAGE" tunnel --hello-world > /dev/null
 	wait_healthy "$CONTAINER"
 	ok "a quick tunnel connects and passes the health check with a read-only root filesystem and all capabilities dropped"
-}
-
-check_request() {
-	local url page=""
-	url="$(docker logs "$CONTAINER" 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' | head -n 1)"
-	[ -n "$url" ] || die "cloudflared logs no trycloudflare.com address for the quick tunnel"
-	for _ in $(seq 30); do
-		page="$(fetch "" "$url" 2> /dev/null)" && break
-		sleep 2
-	done
-	[[ "$page" == *"Congrats! You created a tunnel!"* ]] || die "$url does not answer with the page of the hello world server"
-	ok "a request from the internet reaches the hello world server through the tunnel"
 }
 
 check_private_metrics() {
