@@ -66,7 +66,8 @@ check_repository() {
 	}
 	counts="$(git rev-list --left-right --count "origin/$branch...HEAD" 2> /dev/null)" || die "origin has no branch $branch, push it first"
 	read -r behind ahead <<< "$counts"
-	[ "$behind$ahead" = 00 ] || die "$branch is $ahead commit(s) ahead of and $behind behind origin/$branch, expected it in sync"
+	[ "$behind" = 0 ] || die "$branch is $behind commit(s) behind origin/$branch, pull first"
+	[ "$ahead" = 0 ] || die "$branch is $ahead commit(s) ahead of origin/$branch, push first"
 	ok "$branch is clean and in sync with origin/$branch"
 	grep -qx '## \[Unreleased\]' CHANGELOG.md || die "CHANGELOG.md has no ## [Unreleased] heading, expected one above the first release"
 	entries="$(git ls-files "$CHANGE_DIRECTORY" | wc -l | tr -d ' ')"
