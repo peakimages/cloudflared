@@ -113,7 +113,7 @@ select_stage() {
 }
 
 select_version() {
-	local bases=() base candidate options=() selected=0
+	local bases=() base candidate options=() labels=() selected=0
 	if [ -n "$line" ]; then
 		bases=("$line.0")
 	elif [ "$channel" = preview ]; then
@@ -146,13 +146,14 @@ select_version() {
 		fi
 		if newer "$candidate" "$version" && [[ " ${options[*]:-} " != *" $candidate "* ]]; then
 			options+=("$candidate")
+			labels+=("v$candidate ($(bump_kind "$base"))")
 			! in_progress "$base" || warn "$base is in progress, held by $holder"
 		fi
 	done
 	[ -n "${options[*]:-}" ] || die "$branch is at $version, no $stage prerelease follows it"
 	[ "$selected" -lt "${#options[@]}" ] || selected=$((${#options[@]} - 1))
 	heading "Select the version"
-	new_version="${options[$(menu "$selected" "${options[@]/#/v}")]}"
+	new_version="${options[$(menu "$selected" "${labels[@]}")]}"
 }
 
 update_changelog() {
@@ -275,6 +276,18 @@ release_tags() {
 
 tag_versions() {
 	sed 's/.*v//'
+}
+
+bump_kind() {
+	local major minor
+	IFS=. read -r major minor _ <<< "$stable"
+	if [ "${1%%.*}" != "$major" ]; then
+		echo major
+	elif [ "$(cut -d. -f2 <<< "$1")" != "$minor" ]; then
+		echo minor
+	else
+		echo patch
+	fi
 }
 
 next_version() {
