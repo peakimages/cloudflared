@@ -34,6 +34,7 @@ main() {
 
 check_repository() {
 	local branch
+	command -v jq > /dev/null || die "jq is not installed"
 	git rev-parse --is-inside-work-tree > /dev/null 2>&1 || die "$PWD is not a git repository"
 	branch="$(git rev-parse --abbrev-ref HEAD)"
 	git diff --quiet HEAD~1 HEAD -- . ":(exclude)$VERSION_FILE" ":(exclude)CHANGELOG.md" ":(exclude)$CHANGE_DIRECTORY" || die "the last commit changes more than $VERSION_FILE, CHANGELOG.md and $CHANGE_DIRECTORY, expected a release commit"

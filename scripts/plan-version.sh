@@ -25,6 +25,7 @@ cd "$(dirname "$0")/.."
 
 main() {
 	[[ "$OPTION" =~ ^(--build|--release|--tags)?$ ]] || die "'$OPTION' is not an option, expected --build, --release, --tags or none"
+	command -v jq > /dev/null || die "jq is not installed"
 	read_version
 	print_build_version
 	fetch_origin

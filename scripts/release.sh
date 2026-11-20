@@ -49,6 +49,7 @@ main() {
 check_repository() {
 	local counts behind ahead entries fetched stale
 	heading "Checking the repository"
+	command -v jq > /dev/null || die "jq is not installed"
 	git rev-parse --is-inside-work-tree > /dev/null 2>&1 || die "$PWD is not a git repository"
 	branch="$(git symbolic-ref --quiet --short HEAD)" || die "HEAD is detached, expected a branch"
 	[[ "$branch" =~ ^(main|next|v[0-9]+(\.[0-9]+)?\.x|release/v([0-9]+\.[0-9]+))$ ]] \
