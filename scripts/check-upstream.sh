@@ -7,6 +7,7 @@ BUILD_FILES="Makefile,check-fips.sh,.ci/scripts/linux/build-packages.sh,.ci/scri
 DIFF_FILE="${DIFF_FILE:-/dev/null}"
 NOTES_FILE="${NOTES_FILE:-/dev/null}"
 VERSION_FILE=release.json
+PATCH_FILE=src/patches/dependencies.patch
 WORK_DIR="$(mktemp -d)"
 
 BOLD=$'\033[1m' BLUE=$'\033[34m' GREEN=$'\033[32m' RED=$'\033[31m' RESET=$'\033[0m'
@@ -27,6 +28,7 @@ main() {
 	compare_with_pinned
 	compare_go_versions
 	compare_build_files
+	list_dropped_dependencies
 	write_upstream_json
 	update_dockerfile
 	write_notes
@@ -73,6 +75,22 @@ compare_build_files() {
 	cp "$WORK_DIR/build.diff" "$DIFF_FILE"
 }
 
+list_dropped_dependencies() {
+	local module raised required modules=()
+	dropped=
+	[ -f "$PATCH_FILE" ] || return 0
+	fetch "$version" go.mod > "$WORK_DIR/go.mod"
+	while IFS=@ read -r module raised; do
+		required="$(awk -v module="$module" '/^require \($/ { block = 1; next } /^\)/ { block = 0 } (block || sub(/^require /, "")) && $1 == module { print $2 }' "$WORK_DIR/go.mod")"
+		[ -n "$required" ] && [ "$(printf '%s\n' "$required" "$raised" | sort -V | head -n 1)" != "$raised" ] || modules+=("\`$module\`")
+	done < <(awk '/^diff --git/ { exit } NF == 2 { print $2 }' "$PATCH_FILE")
+	[ "${#modules[@]}" -gt 0 ] || return 0
+	printf -v dropped '%s, ' "${modules[@]}"
+	dropped="${dropped%, }"
+	[ "${#modules[@]}" -eq 1 ] || dropped="${dropped%, *} and ${dropped##*, }"
+	info "the patch drops $dropped, cloudflared $version requires the fixed version"
+}
+
 write_upstream_json() {
 	jq --tab --arg version "$version" --arg repository "https://github.com/$REPOSITORY" --arg commit "$commit" \
 		'.cloudflared.latest = {$version, $repository, $commit}' src/upstream.json > "$WORK_DIR/upstream.json"
@@ -89,6 +107,7 @@ update_dockerfile() {
 write_notes() {
 	printf -- '### Changed\n\n- cloudflared from v%s to v%s, see its [release notes](https://github.com/%s/blob/refs/tags/%s/RELEASE_NOTES)\n' \
 		"$pinned" "$version" "$REPOSITORY" "$version" > "$WORK_DIR/notes.md"
+	[ -z "$dropped" ] || printf '  - The patch of %s is dropped, cloudflared v%s requires the fixed version\n' "$dropped" "$version" >> "$WORK_DIR/notes.md"
 	sed 's/^### /## /' "$WORK_DIR/notes.md" > "$NOTES_FILE"
 }
 

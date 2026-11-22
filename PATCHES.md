@@ -42,7 +42,7 @@ Every package manager runs in the image of its `ARG` in `src/Dockerfile`, nothin
 
 ## Update cloudflared with a patch
 
-The build workflow runs `scripts/patch-dependencies.sh --check` before it builds. It fails when the pinned cloudflared requires a raised dependency itself, or when the patch no longer applies. On the branch of the pull request that bumps cloudflared, manually write the patch again for the new release. It drops every dependency the release raises itself, and the whole file once none is left:
+The build workflow runs `scripts/patch-dependencies.sh --check` before it builds. It fails when the pinned cloudflared requires a raised dependency itself, or when the patch no longer applies. The pull request that bumps cloudflared writes the patch again for the new release. It drops every dependency the release raises itself, and the whole file once none is left:
 
 ```sh
 scripts/patch-dependencies.sh
