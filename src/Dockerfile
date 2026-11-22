@@ -113,6 +113,8 @@ LABEL org.opencontainers.image.title="cloudflared" \
     dev.peakimages.image.package-manager=""
 
 ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
+    SSL_CERT_DIR=/etc/ssl/certs \
     TUNNEL_METRICS=127.0.0.1:20241
 
 WORKDIR /home/nonroot

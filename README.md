@@ -98,10 +98,12 @@ The `fips` flavor only uses approved algorithms, TLS with AES-GCM and `X25519MLK
 
 cloudflared reads its settings from environment variables, override them with `-e` or the `environment` section of a docker compose service. Every flag of `cloudflared tunnel run` has one, see the [run parameters](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/cloudflared-parameters/run-parameters/).
 
-| Variable         | Default           | Meaning                                                                                                                                                                            |
-| ---------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TUNNEL_TOKEN`   | unset             | Token of the tunnel from the Cloudflare dashboard. Set it here rather than with `--token`, which puts it on the command line of the process                                        |
-| `TUNNEL_METRICS` | `127.0.0.1:20241` | Address of the metrics port. `0.0.0.0:20241` opens it to Prometheus, a Kubernetes HTTP probe and `cloudflared tunnel diag` on the host, and to every container on the same network |
+| Variable         | Default                              | Meaning                                                                                                                                                                            |
+| ---------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TUNNEL_TOKEN`   | unset                                | Token of the tunnel from the Cloudflare dashboard. Set it here rather than with `--token`, which puts it on the command line of the process                                        |
+| `TUNNEL_METRICS` | `127.0.0.1:20241`                    | Address of the metrics port. `0.0.0.0:20241` opens it to Prometheus, a Kubernetes HTTP probe and `cloudflared tunnel diag` on the host, and to every container on the same network |
+| `SSL_CERT_FILE`  | `/etc/ssl/certs/ca-certificates.crt` | CA bundle for HTTPS origins and the Cloudflare API. A file with your own CA adds it to the default CAs, as the files in `SSL_CERT_DIR` stay trusted                                |
+| `SSL_CERT_DIR`   | `/etc/ssl/certs`                     | Directories whose CA files are trusted along with `SSL_CERT_FILE`, separated by `:`. A directory that does not exist, such as `/nonexistent`, trusts `SSL_CERT_FILE` alone         |
 
 ## Attestations
 
