@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v2026.11.1-v0.1.3] - 2026-11-22
+
+### Fixed
+
+- Missing `SSL_CERT_FILE` and `SSL_CERT_DIR` environment variables
+  - `SSL_CERT_FILE` points at the CA bundle of the image, `/etc/ssl/certs/ca-certificates.crt`, as in the official image, and lets users set another bundle at runtime
+  - `SSL_CERT_DIR` points at `/etc/ssl/certs`, the directory Go reads by default, and lets users set other directories at runtime
+- Release notes of a cloudflared update linking to its GitHub release, which only lists checksums
+  - The link points at `RELEASE_NOTES` at the tag of the cloudflared release
+
+### Maintenance
+
+- Listed every release under its full tag in `CHANGELOG.md`
+  - Every cloudflared update has a section of its own, not only every version of the image
+
 ## [v2026.11.1-v0.1.2] - 2026-11-18
 
 ### Changed
