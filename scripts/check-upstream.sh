@@ -5,7 +5,7 @@ OPTION="$*"
 REPOSITORY=cloudflare/cloudflared
 BUILD_FILES="Makefile,check-fips.sh,.ci/scripts/linux/build-packages.sh,.ci/scripts/linux/build-packages-fips.sh"
 DIFF_FILE="${DIFF_FILE:-/dev/null}"
-NOTES_FILE="${NOTES_FILE:-/dev/null}"
+BODY_FILE="${BODY_FILE:-/dev/null}"
 VERSION_FILE=release.json
 PATCH_FILE=src/patches/dependencies.patch
 WORK_DIR="$(mktemp -d)"
@@ -105,10 +105,15 @@ update_dockerfile() {
 }
 
 write_notes() {
-	printf -- '### Changed\n\n- cloudflared from v%s to v%s, see its [release notes](https://github.com/%s/blob/refs/tags/%s/RELEASE_NOTES)\n' \
-		"$pinned" "$version" "$REPOSITORY" "$version" > "$WORK_DIR/notes.md"
-	[ -z "$dropped" ] || printf '  - The patch of %s is dropped, cloudflared v%s requires the fixed version\n' "$dropped" "$version" >> "$WORK_DIR/notes.md"
-	sed 's/^### /## /' "$WORK_DIR/notes.md" > "$NOTES_FILE"
+	local notes="https://github.com/$REPOSITORY/blob/refs/tags/$version/RELEASE_NOTES"
+	{
+		printf -- '### Changed\n\n- cloudflared from v%s to v%s, see its [release notes](%s)\n' "$pinned" "$version" "$notes"
+		[ -z "$dropped" ] || printf '  - The patch of %s is dropped, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
+	} > "$WORK_DIR/notes.md"
+	{
+		printf -- '## Changes\n\n- Bump cloudflared version from v%s to v%s, see its [release notes](%s)\n' "$pinned" "$version" "$notes"
+		[ -z "$dropped" ] || printf -- '- Drop %s from the dependency patch, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
+	} > "$BODY_FILE"
 }
 
 update_changelog() {

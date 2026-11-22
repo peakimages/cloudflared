@@ -62,7 +62,7 @@ jobs:
       - name: Check GitHub and pin a new cloudflared release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: DIFF_FILE="$RUNNER_TEMP/build.diff" NOTES_FILE="$RUNNER_TEMP/notes.md" scripts/check-upstream.sh
+        run: DIFF_FILE="$RUNNER_TEMP/build.diff" BODY_FILE="$RUNNER_TEMP/body.md" scripts/check-upstream.sh
 
       - name: Update the dependency patch for the new release
         run: git diff --quiet || scripts/patch-dependencies.sh
@@ -83,7 +83,7 @@ jobs:
             echo "a pull request from $branch is open already"
             exit 0
           fi
-          { cat "$RUNNER_TEMP/notes.md"; echo; } > "$RUNNER_TEMP/body.md"
+          echo >> "$RUNNER_TEMP/body.md"
           if [ -s "$RUNNER_TEMP/build.diff" ]; then
             cat >> "$RUNNER_TEMP/body.md" <<NOTE
           > [!NOTE]
