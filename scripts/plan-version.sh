@@ -132,7 +132,7 @@ check_version() {
 }
 
 select_releases() {
-	local name upstream tag previous older moves listed added=""
+	local name upstream tag moves listed added=""
 	releases=
 	[ "$publish" = true ] || return 0
 	while read -r name upstream; do
@@ -141,13 +141,8 @@ select_releases() {
 			info "$tag is published"
 			continue
 		fi
-		previous=
-		while read -r older; do
-			! newer "$upstream" "$older" || previous="$older"
-		done < <(with_version "$version" <<< "$tags" | sed -nE 's/^v(.*)-v.*/\1/p')
 		added+="$tag"$'\n'
-		releases+="$(jq -nc --arg name "$name" --arg version "$upstream" --arg image "$version" --arg tag "$tag" --arg previous "$previous" \
-			'{$name, $version, $image, $tag, $previous}')"$'\n'
+		releases+="$(jq -nc --arg name "$name" --arg version "$upstream" --arg image "$version" --arg tag "$tag" '{$name, $version, $image, $tag}')"$'\n'
 	done < <(upstream_lines)
 	moves="$(moved_tags "$tags" "$tags"$'\n'"$added")"
 	for tag in $added; do

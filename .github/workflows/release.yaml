@@ -128,23 +128,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ matrix.release.tag }}
           IMAGE_VERSION: ${{ matrix.release.image }}
-          CLOUDFLARED_VERSION: ${{ matrix.release.version }}
-          PREVIOUS: ${{ matrix.release.previous }}
         run: |
           args=(--title "$TAG" --target "$GITHUB_SHA" --notes-file "$RUNNER_TEMP/notes.md" --latest=false)
-          heading="## [v$IMAGE_VERSION]"
+          heading="## [$TAG]"
           [[ "$IMAGE_VERSION" != *-* ]] || { args+=(--prerelease); heading="## [Unreleased]"; }
-          if [ -z "$PREVIOUS" ]; then
-            awk -v heading="$heading" 'index($0, heading) == 1 { inside = 1; next } /^## / { inside = 0 } inside { sub(/^### /, "## "); print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
-          else
-            cat > "$RUNNER_TEMP/notes.md" <<NOTES
-          Updates cloudflared to v$CLOUDFLARED_VERSION, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/$CLOUDFLARED_VERSION/RELEASE_NOTES).
-
-          ## Changed
-
-          - cloudflared from v$PREVIOUS to v$CLOUDFLARED_VERSION
-          NOTES
-          fi
+          awk -v heading="$heading" 'index($0, heading) == 1 { inside = 1; next } /^## / { inside = 0 } inside { sub(/^### /, "## "); print }' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
           gh release create "$TAG" "${args[@]}"
 
   tags:

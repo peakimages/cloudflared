@@ -5,6 +5,8 @@ OPTION="$*"
 REPOSITORY=cloudflare/cloudflared
 BUILD_FILES="Makefile,check-fips.sh,.ci/scripts/linux/build-packages.sh,.ci/scripts/linux/build-packages-fips.sh"
 DIFF_FILE="${DIFF_FILE:-/dev/null}"
+NOTES_FILE="${NOTES_FILE:-/dev/null}"
+VERSION_FILE=release.json
 WORK_DIR="$(mktemp -d)"
 
 BOLD=$'\033[1m' BLUE=$'\033[34m' GREEN=$'\033[32m' RED=$'\033[31m' RESET=$'\033[0m'
@@ -27,6 +29,8 @@ main() {
 	compare_build_files
 	write_upstream_json
 	update_dockerfile
+	write_notes
+	update_changelog
 }
 
 read_newest_release() {
@@ -80,6 +84,33 @@ update_dockerfile() {
 	sed -E "s|^ARG CLOUDFLARED_VERSION=.*|ARG CLOUDFLARED_VERSION=$version|" src/Dockerfile > "$WORK_DIR/Dockerfile"
 	cp "$WORK_DIR/Dockerfile" src/Dockerfile
 	ok "src/Dockerfile sets CLOUDFLARED_VERSION $BOLD$version$RESET"
+}
+
+write_notes() {
+	printf -- '### Changed\n\n- cloudflared from v%s to v%s, see its [release notes](https://github.com/%s/blob/refs/tags/%s/RELEASE_NOTES)\n' \
+		"$pinned" "$version" "$REPOSITORY" "$version" > "$WORK_DIR/notes.md"
+	sed 's/^### /## /' "$WORK_DIR/notes.md" > "$NOTES_FILE"
+}
+
+update_changelog() {
+	local branch tag
+	branch="$(git branch --show-current)"
+	if [[ "$branch" =~ ^(next|release/v[0-9]+\.[0-9]+)$ ]]; then
+		info "$branch publishes prereleases only, the next one ships cloudflared $version"
+		return
+	fi
+	tag="v$version-v$(jq -r .stable.image "$VERSION_FILE")"
+	awk -v heading="## [$tag] - $(date +%Y-%m-%d)" -v notes="$WORK_DIR/notes.md" '
+		/^## \[v/ && !added {
+			print heading "\n"
+			while ((getline line < notes) > 0) print line
+			print ""
+			added = 1
+		}
+		1
+	' CHANGELOG.md > "$WORK_DIR/CHANGELOG.md"
+	cp "$WORK_DIR/CHANGELOG.md" CHANGELOG.md
+	ok "CHANGELOG.md lists cloudflared $version under $BOLD## [$tag]$RESET"
 }
 
 fetch() {

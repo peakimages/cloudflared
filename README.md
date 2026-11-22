@@ -131,7 +131,7 @@ trivy image peakimages/cloudflared:latest
 
 Every cloudflared release becomes a new version of the image. A check for new cloudflared releases runs twice a day.
 
-The image version follows semantic versioning independently of cloudflared. Changes to the image are listed in [CHANGELOG.md](CHANGELOG.md).
+The image version follows semantic versioning independently of cloudflared, a tag is `<cloudflared version>-v<image version>`, such as `2026.11.1-v0.1.2`. Every release is listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Trademarks
 

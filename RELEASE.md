@@ -77,9 +77,9 @@ Missing description and license on ghcr.io
 - A section lists its entries in the order of their file names, the version bumps, whose summary ends in `from <version> to <version>`, after the other changes
 - `scripts/release.sh` preselects the version the files need and writes them into `CHANGELOG.md`, the release workflow reads its notes from there
 - A prerelease writes the files under `## [Unreleased]`, keeps them and adds its version to the files that have none
-- A stable release writes the files under `## [v1.4.0] - <date>` and removes them
+- A stable release writes the files under `## [v2026.11.0-v1.4.0] - <date>` and removes them
 - `scripts/undo-release.sh` brings the files back as they were
-- A new cloudflared version needs no file, the release workflow writes its notes
+- A new cloudflared version needs no file, its pull request adds its section
 
 ## Backport a fix
 

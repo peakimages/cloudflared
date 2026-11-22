@@ -7,6 +7,7 @@ CHANGE_DIRECTORY=.changes
 SECTIONS='Breaking Changes,Security,Added,Changed,Deprecated,Removed,Fixed,Refactored,Maintenance'
 ARTIFACT=image
 UPSTREAM=cloudflared
+UPSTREAM_FILE=src/upstream.json
 WORK_DIR="$(mktemp -d)"
 
 BOLD=$'\033[1m' BLUE=$'\033[34m' GREEN=$'\033[32m' YELLOW=$'\033[33m' RED=$'\033[31m' DIM=$'\033[2m' RESET=$'\033[0m'
@@ -152,23 +153,42 @@ select_version() {
 }
 
 update_changelog() {
-	local heading=''
-	[ "$channel" = preview ] || heading="## [v$new_version] - $(date +%Y-%m-%d)"
+	local upstream heading headings=''
 	print_notes > "$WORK_DIR/notes.md"
-	awk -v heading="$heading" -v notes="$WORK_DIR/notes.md" '
+	if [ "$channel" = preview ]; then
+		cp "$WORK_DIR/notes.md" "$WORK_DIR/sections.md"
+	else
+		: > "$WORK_DIR/sections.md"
+		while read -r upstream; do
+			heading="## [v${upstream:+$upstream-v}$new_version] - $(date +%Y-%m-%d)"
+			{
+				printf '%s\n\n' "$heading"
+				cat "$WORK_DIR/notes.md"
+			} >> "$WORK_DIR/sections.md"
+			headings+="${headings:+, }$heading"
+		done < <(upstream_versions)
+	fi
+	awk -v sections="$WORK_DIR/sections.md" '
 		/^## / { inside = 0 }
 		/^## \[Unreleased\]$/ {
 			inside = 1
 			print
 			print ""
-			if (heading != "") { print heading; print "" }
-			while ((getline line < notes) > 0) print line
+			while ((getline line < sections) > 0) print line
 			next
 		}
 		!inside
 	' CHANGELOG.md > "$WORK_DIR/CHANGELOG.md"
 	cp "$WORK_DIR/CHANGELOG.md" CHANGELOG.md
-	ok "CHANGELOG.md lists the changes under $BOLD${heading:-## [Unreleased]}$RESET"
+	ok "CHANGELOG.md lists the changes under $BOLD${headings:-## [Unreleased]}$RESET"
+}
+
+upstream_versions() {
+	if [ -z "$UPSTREAM" ]; then
+		echo
+		return
+	fi
+	jq -r --arg upstream "$UPSTREAM" '.[$upstream][].version' "$UPSTREAM_FILE"
 }
 
 print_notes() {

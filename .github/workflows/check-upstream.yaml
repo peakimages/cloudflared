@@ -62,7 +62,7 @@ jobs:
       - name: Check GitHub and pin a new cloudflared release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: DIFF_FILE="$RUNNER_TEMP/build.diff" scripts/check-upstream.sh
+        run: DIFF_FILE="$RUNNER_TEMP/build.diff" NOTES_FILE="$RUNNER_TEMP/notes.md" scripts/check-upstream.sh
 
       - name: Open a pull request for the new release
         env:
@@ -73,7 +73,6 @@ jobs:
           pin() { jq -r ".cloudflared.latest.$1"; }
           current="$(git show HEAD:src/upstream.json | pin version)"
           version="$(pin version < src/upstream.json)"
-          commit="$(pin commit < src/upstream.json)"
           branch="feat/cloudflared-v$version"
           [ "$BASE" = main ] || branch="$branch-${BASE//\//-}"
           title="feat(release): bump cloudflared version from v$current to v$version"
@@ -81,14 +80,7 @@ jobs:
             echo "a pull request from $branch is open already"
             exit 0
           fi
-          cat > "$RUNNER_TEMP/body.md" <<BODY
-          Updates cloudflared to v$version, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/$version/RELEASE_NOTES) and its [release commit](https://github.com/cloudflare/cloudflared/commit/$commit).
-
-          ## Changes
-
-          - Bump cloudflared version from v$current to v$version
-
-          BODY
+          { cat "$RUNNER_TEMP/notes.md"; echo; } > "$RUNNER_TEMP/body.md"
           if [ -s "$RUNNER_TEMP/build.diff" ]; then
             cat >> "$RUNNER_TEMP/body.md" <<NOTE
           > [!NOTE]
