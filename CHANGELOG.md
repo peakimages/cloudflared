@@ -1,19 +1,26 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. cloudflared version bumps are not listed, every release tag names the cloudflared version it ships.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [v0.1.2] - 2026-11-17
+## [v2026.11.1-v0.1.2] - 2026-11-18
+
+### Changed
+
+- cloudflared from v2026.11.0 to v2026.11.1, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/2026.11.1/RELEASE_NOTES)
+  - The patch of `go.opentelemetry.io/otel/sdk` and `go.opentelemetry.io/otel/trace` is dropped, cloudflared v2026.11.1 requires the fixed version
+
+## [v2026.11.0-v0.1.2] - 2026-11-17
 
 ### Security
 
 - Patched two OpenTelemetry modules of cloudflared with a known vulnerability
   - `go.opentelemetry.io/otel/sdk` and `go.opentelemetry.io/otel/trace` from v1.45.0 to v1.47.0 for [CVE-2026-128085](https://www.cve.org/CVERecord?id=CVE-2026-128085)
 
-## [v0.1.1] - 2026-11-13
+## [v2026.11.0-v0.1.1] - 2026-11-13
 
 ### Security
 
@@ -21,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `golang.org/x/net` from v0.61.0 to v0.62.0 for [CVE-2026-78661](https://www.cve.org/CVERecord?id=CVE-2026-78661) and [CVE-2026-97045](https://www.cve.org/CVERecord?id=CVE-2026-97045)
   - `golang.org/x/crypto` from v0.58.0 to v0.59.0 for [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932)
 
-## [v0.1.0] - 2026-11-12
+## [v2026.11.0-v0.1.0] - 2026-11-12
 
 ### Added
 
