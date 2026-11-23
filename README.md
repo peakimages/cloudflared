@@ -24,7 +24,7 @@ cloudflared is one Go binary that needs nothing but CA certificates. This image 
 - ✅ FIPS 140-3: A `fips` flavor built with Go's certified cryptographic module
 - ✅ Verified Source: The release tag must point to the pinned commit and every Go module must match `go.sum` before each compilation
 - ✅ Modern Architecture: Native health check, OCI labels, reproducible builds, provenance and SBOM attestations
-- ✅ Always Current: GitHub is checked twice a day and new cloudflared releases become new images
+- ✅ Always Current: GitHub is checked every two hours and new cloudflared releases become new images
 - ✅ Multi-Architecture: Builds for `linux/amd64`, `linux/arm64`, `linux/arm/v7`, `linux/arm/v6`, `linux/386`, `linux/riscv64`, `linux/ppc64le` and `linux/s390x`
 - ✅ Tested: Every release is tested on all eight platforms before it is published
 
@@ -131,7 +131,7 @@ trivy image peakimages/cloudflared:latest
 
 ## Releases
 
-Every cloudflared release becomes a new version of the image. A check for new cloudflared releases runs twice a day.
+Every cloudflared release becomes a new version of the image. A check for new cloudflared releases runs every two hours.
 
 The image version follows semantic versioning independently of cloudflared, a tag is `<cloudflared version>-v<image version>`, such as `2026.11.1-v0.1.2`. Every release is listed in [CHANGELOG.md](CHANGELOG.md).
 
