@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v2026.11.2-v0.1.3] - 2026-11-23
+
+### Changed
+
+- cloudflared from v2026.11.1 to v2026.11.2, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/2026.11.2/RELEASE_NOTES)
+  - The patch of `golang.org/x/net` and `golang.org/x/crypto` is dropped, cloudflared v2026.11.2 requires the fixed version
+
 ## [v2026.11.1-v0.1.3] - 2026-11-22
 
 ### Fixed
