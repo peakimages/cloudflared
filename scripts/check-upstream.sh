@@ -31,6 +31,7 @@ main() {
 	list_dropped_dependencies
 	write_upstream_json
 	update_dockerfile
+	link_release_notes
 	write_notes
 	update_changelog
 }
@@ -38,6 +39,8 @@ main() {
 read_newest_release() {
 	version="$(gh api "repos/$REPOSITORY/releases/latest" --jq .tag_name)"
 	[[ "$version" =~ ^[0-9]{4}\.[0-9]+\.[0-9]+$ ]] || die "the latest release of $REPOSITORY is '$version', expected year.month.patch"
+	releases="$(gh api "repos/$REPOSITORY/releases?per_page=100" --jq '.[] | select((.draft or .prerelease) | not) | .tag_name' \
+		| sed -nE 's/^([0-9]+\.[0-9]+\.[0-9]+)$/\1/p')"
 	commit="$(gh api "repos/$REPOSITORY/commits/refs/tags/$version" --jq .sha)"
 }
 
@@ -104,14 +107,27 @@ update_dockerfile() {
 	ok "src/Dockerfile sets CLOUDFLARED_VERSION $BOLD$version$RESET"
 }
 
+link_release_notes() {
+	local skipped release
+	skipped="$(printf '%s\n' "$releases" "$pinned" "$version" | sort -Vu | awk -v from="$pinned" -v to="$version" '$0 == to { done = 1 } on && !done; $0 == from { on = 1 }')"
+	if [ -z "$skipped" ]; then
+		notes="its [release notes]($(notes_url "$version"))"
+		return
+	fi
+	notes="the release notes of "
+	for release in $skipped; do
+		notes+="[v$release]($(notes_url "$release")), "
+	done
+	notes="${notes%, } and [v$version]($(notes_url "$version"))"
+}
+
 write_notes() {
-	local notes="https://github.com/$REPOSITORY/blob/refs/tags/$version/RELEASE_NOTES"
 	{
-		printf -- '### Changed\n\n- cloudflared from v%s to v%s, see its [release notes](%s)\n' "$pinned" "$version" "$notes"
+		printf -- '### Changed\n\n- cloudflared from v%s to v%s, see %s\n' "$pinned" "$version" "$notes"
 		[ -z "$dropped" ] || printf '  - The patch of %s is dropped, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
 	} > "$WORK_DIR/notes.md"
 	{
-		printf -- '## Changes\n\n- Bump cloudflared version from v%s to v%s, see its [release notes](%s)\n' "$pinned" "$version" "$notes"
+		printf -- '## Changes\n\n- Bump cloudflared version from v%s to v%s, see %s\n' "$pinned" "$version" "$notes"
 		[ -z "$dropped" ] || printf -- '- Drop %s from the dependency patch, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
 	} > "$BODY_FILE"
 }
@@ -136,6 +152,8 @@ update_changelog() {
 	cp "$WORK_DIR/CHANGELOG.md" CHANGELOG.md
 	ok "CHANGELOG.md lists cloudflared $version under $BOLD## [$tag]$RESET"
 }
+
+notes_url() { echo "https://github.com/$REPOSITORY/blob/refs/tags/$1/RELEASE_NOTES"; }
 
 fetch() {
 	curl --proto '=https' --tlsv1.2 -sSf --retry 3 "https://raw.githubusercontent.com/$REPOSITORY/refs/tags/$1/$2"
