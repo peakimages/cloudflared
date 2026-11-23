@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - cloudflared from v2026.11.1 to v2026.11.2, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/2026.11.2/RELEASE_NOTES)
-  - The patch of `golang.org/x/net` and `golang.org/x/crypto` is dropped, cloudflared v2026.11.2 requires the fixed version
+  - The patch for `golang.org/x/net` and `golang.org/x/crypto` is no longer needed, as cloudflared v2026.11.2 already requires the fixed versions
 
 ## [v2026.11.1-v0.1.3] - 2026-11-22
 
@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - cloudflared from v2026.11.0 to v2026.11.1, see its [release notes](https://github.com/cloudflare/cloudflared/blob/refs/tags/2026.11.1/RELEASE_NOTES)
-  - The patch of `go.opentelemetry.io/otel/sdk` and `go.opentelemetry.io/otel/trace` is dropped, cloudflared v2026.11.1 requires the fixed version
+  - The patch for `go.opentelemetry.io/otel/sdk` and `go.opentelemetry.io/otel/trace` is no longer needed, as cloudflared v2026.11.1 already requires the fixed versions
 
 ## [v2026.11.0-v0.1.2] - 2026-11-17
 
