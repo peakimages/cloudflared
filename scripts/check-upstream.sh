@@ -124,11 +124,11 @@ link_release_notes() {
 write_notes() {
 	{
 		printf -- '### Changed\n\n- cloudflared from v%s to v%s, see %s\n' "$pinned" "$version" "$notes"
-		[ -z "$dropped" ] || printf '  - The patch of %s is dropped, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
+		[ -z "$dropped" ] || printf '  - The patch for %s is no longer needed, as cloudflared v%s already requires the fixed versions\n' "$dropped" "$version"
 	} > "$WORK_DIR/notes.md"
 	{
 		printf -- '## Changes\n\n- Bump cloudflared version from v%s to v%s, see %s\n' "$pinned" "$version" "$notes"
-		[ -z "$dropped" ] || printf -- '- Drop %s from the dependency patch, cloudflared v%s requires the fixed version\n' "$dropped" "$version"
+		[ -z "$dropped" ] || printf -- '- Drop %s from the dependency patch, as cloudflared v%s already requires the fixed versions\n' "$dropped" "$version"
 	} > "$BODY_FILE"
 }
 
