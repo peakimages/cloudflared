@@ -10,10 +10,6 @@ on:
         description: The upstream lines to build as JSON, every line of src/upstream.json when empty
         type: string
         default: ""
-      pull-request:
-        description: The number of the pull request to build
-        type: string
-        default: ""
 
 permissions: {}
 
@@ -48,7 +44,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.base_ref || github.ref_name }}
-          PULL_REQUEST: ${{ inputs.pull-request }}
+          PULL_REQUEST: ${{ github.event.pull_request.number }}
         run: |
           gh auth setup-git
           image="$(scripts/plan-version.sh --build)"
