@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [v2026.11.2-v0.1.4] - 2026-11-26
+
+### Security
+
+- Patched the two WebSocket modules of cloudflared with a known vulnerability
+  - `github.com/gobwas/ws` from v1.2.1 to v1.5.0 for [GO-2026-6940](https://pkg.go.dev/vuln/GO-2026-6940)
+  - `github.com/gorilla/websocket` from v1.5.3 to v1.5.4-0.20250319132907-e064f32e3674 for [GO-2026-6278](https://pkg.go.dev/vuln/GO-2026-6278)
+
+### Maintenance
+
+- Updated the Go image that builds cloudflared to the digest of its rebuild
+  - `golang:1.27.4-alpine3.24` to `sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280`
+
 ## [v2026.11.2-v0.1.3] - 2026-11-23
 
 ### Changed
