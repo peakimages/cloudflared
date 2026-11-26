@@ -5,7 +5,7 @@ ARG CLOUDFLARED_VERSION=2026.11.2
 
 # Dependencies
 # https://hub.docker.com/_/golang/tags?name=1.27.4-alpine3.24
-ARG GO_IMAGE=golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf
+ARG GO_IMAGE=golang:1.27.4-alpine3.24@sha256:70bd7ddea8b6cbe5d6943cde279d6b67feb10cc924fb9100d1d8757c1575b280
 # https://go.dev/doc/security/fips140
 ARG GO_FIPS140_MODULE=v1.0.0-c2097c7c
 # https://hub.docker.com/_/alpine/tags?name=3.24.4
